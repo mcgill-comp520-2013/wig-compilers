@@ -1,0 +1,10 @@
+service {
+    const html Test = <html> content </html> ;
+
+    int a ;
+
+    session Simple() {
+        bool test ;
+        exit test;
+    }
+}

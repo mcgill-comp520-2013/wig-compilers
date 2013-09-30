@@ -1,0 +1,18 @@
+service {
+
+ const html Hello =
+    <html>
+        Hello
+    </html> ;
+
+  schema schema1 {
+      int lol ;
+  }
+
+    session Simple() {
+      tuple schemaNOTFOUND tup1 ;
+      exit Hello ;
+      
+    }
+
+}

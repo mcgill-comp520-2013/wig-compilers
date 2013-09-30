@@ -1,0 +1,69 @@
+WIG Compiler
+McGill University Fall 2011
+Matthieu Dubet
+A WIG to CGI Ruby compiler.
+
+# How to compile the compiler :)
+make
+
+You will need the standard ocaml distribution, which contains ocamlc, ocamlbuid, ocamllex and ocamlyacc
+
+
+# Usage
+./mdwig.native -o cgi.rb file.wig
+The outputed Ruby file is a CGI script 
+
+For more information:
+./mdwig.native --help
+
+# Testing
+./benchmarks.rb will run the compiler on all the wig files in the examples/ folder.
+
+# Grammar
+This compiler accepts an extended WIG grammar, particularly :
+  * WIG attribute in HTML tags or input
+    	Except has the rvalue of name tag in an input tag , it has to be a stringconst !
+	<input name=<[wig_val]> .....>  is rejected by the parser
+  * Single attribute in HTML tags { <body center> )
+  * Close tag (<img .... /> )
+  
+  * C single line comment ( // xxxxx )
+  * C multiline comment ( /* dsfsdfsdfsdfs */ )
+  * HTML comment in HTML ( <!-- dfgdfgdfgd --> )
+  * exit (plug) Identifier [args] ( because of group-1 wigg.wig which hasn't the plug)
+
+Things which may be added in the future:
+  * recursive tuples
+
+The weeder expects :
+  * every function has a return function for every possible flow path (even void fun should have a return;)
+  * every session returns an exit for every possible flow path 
+
+The symboltable excepts (nothing weird here):
+    * no redeclaration of a variable on the same level
+    * no usage of unknown variable
+
+
+# Examples which currently doesn't compile
+group1/wigg.wig : they harcoded hypertext link to wigg.pl, I guess they used lkwig  which generate Perl script..
+group7/mastermind.wig1 : implicit cast from integer to string in function appendPrev NOT SUPPORTED
+
+# Examples which currently work completely
+classic/calculator
+classic/chat
+classic/counter
+classic/game
+classic/gameTuple
+classic/legoman
+classic/poll
+classic/riddles
+classic/talk
+classic/tiny
+classic/tupletorture
+boyard
+bench2009/group-3/wigshop
+bench2009/group-4/battle
+bench2009/group-5/fatchecker
+
+# License
+MIT

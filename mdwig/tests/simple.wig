@@ -1,0 +1,18 @@
+service {
+
+ const html Hello =
+    <html>
+        Hello
+    </html> ;
+
+    int a ;
+    string s ;
+    bool b ;
+
+    session Simple() {
+        int b ;
+        string b;
+        a = 2 ;
+    }
+
+}

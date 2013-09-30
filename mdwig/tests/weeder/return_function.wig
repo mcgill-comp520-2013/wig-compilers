@@ -1,0 +1,26 @@
+service {
+
+ const html Hello =
+    <html>
+        Hello
+    </html> ;
+
+    int a ;
+    string s ;
+    bool b ;
+
+    int fun1() {
+
+    int a ;
+    a =2 ;
+    return 2 ;
+
+    }
+
+    session Simple() {
+        int b ;
+        a = 2 ;
+        exit Hello ;
+    }
+
+}

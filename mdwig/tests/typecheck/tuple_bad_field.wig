@@ -1,0 +1,25 @@
+service {
+
+ const html Hello =
+    <html>
+        Hello
+    </html> ;
+
+ schema schema1 {
+  int a ;
+  bool b ;
+}
+
+    session Simple() {
+      tuple schema1 tuple1,tuple334 ;
+      int i ;
+
+      i = tuple1.a ;
+
+      tuple1 = (tuple1 \+ s) ;
+
+       
+      exit Hello ;
+    }
+
+}
