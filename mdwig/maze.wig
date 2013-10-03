@@ -1,0 +1,188 @@
+/*
+	This wig service implements a super simple "get out of the maze" game on a 4x4 grid.
+	The maze is randomly generated from a 16-bit number, in which each '1' bit is
+	interpreted as a wall in the corresponding maze cell. The player starts in the
+	upper-left corner and must get to the lower-left corner using a series of
+	horizontal or vertical moves. Note that most mazes are impossible to complete.
+*/
+service
+{
+	/*
+		HTML page to query a maze seed from the user,
+		with a default value randomly generated using javascript.
+	*/
+	const html getSeedHtml = <html>
+		<body>
+			Enter a seed value in [0, 65535]: 
+			<input type="text" name="seed" id="seed">
+			<script>document.getElementById("seed").value = Math.floor(Math.random() * 65536);</script>
+		</body>
+	</html>;
+	
+	/* HTML page to display the state of the maze and ask for a move */
+	const html showMazeHtml = <html>
+		<body>
+			Get out of this maze:
+			<table border="1">
+				<tr><td><[m00]></td><td><[m10]></td><td><[m20]></td><td><[m30]></td></tr>
+				<tr><td><[m01]></td><td><[m11]></td><td><[m21]></td><td><[m31]></td></tr>
+				<tr><td><[m02]></td><td><[m12]></td><td><[m22]></td><td><[m32]></td></tr>
+				<tr><td><[m03]></td><td><[m13]></td><td><[m23]></td><td><[m33]></td></tr>
+			</table>
+			Choose an action: 
+			<select name="action">
+				<option value="left">Left</option>
+				<option value="right">Right</option>
+				<option value="up">Up</option>
+				<option value="down">Down</option>
+				<option value="exit">Exit</option>
+			</select>
+		</body>
+	</html>;
+	
+	/* HTML page for when the user exits */
+	const html exitHtml = <html>
+		<body>
+			Bye, bye!
+		</body>
+	</html>;
+	
+	/* HTML page for when the user reaches the end */
+	const html victoryHtml = <html>
+		<body>
+			You won!
+		</body>
+	</html>;
+	
+	schema Point
+	{
+		int x;
+		int y;
+	}
+	
+	schema Size
+	{
+		int width;
+		int height;
+	}
+	
+	/* "Constants", initialized in the session since
+	initializers are not supported with the compiler I'm using */
+	tuple Size mazeSize;
+	tuple Point startPosition;
+	tuple Point goalPosition;
+	
+	/* Compares two points for equality */
+	bool PointEqual(tuple Point first, tuple Point second)
+	{
+		return first.x == second.x && first.y == second.y;
+	}
+	
+	/* Determines if a position in the maze is walkable */
+	bool IsWalkable(int maze, tuple Point position)
+	{
+		int index;
+		
+		/* Start and goal are always walkable */
+		if (PointEqual(position, startPosition)
+			|| PointEqual(position, goalPosition))
+			return true;
+		
+		/* Out of bounds are unwalkable */
+		if (position.x < 0 || position.y < 0
+			|| position.x >= mazeSize.width
+			|| position.y >= mazeSize.height)
+			return false;
+		
+		/* Check what the corresponding bit is set to 0 */
+		index = position.y * 4 + position.x;
+		while (index > 0)
+		{
+			maze = maze / 2;
+			index = index - 1;
+		}
+		
+		return (maze % 2) == 0;
+	}
+	
+	/* Gets a string representation of a maze cell. */
+	string GetMazeCell(int maze, tuple Point position, int x, int y)
+	{
+		tuple Point point;
+		point = tuple { x = x, y = y };
+		if (PointEqual(point, position))
+			return "X"; /* Player */
+		else if (PointEqual(point, goalPosition))
+			return "G"; /* Goal */
+		else if (IsWalkable(maze, point))
+			return " ";
+		
+		return "#";
+	}
+	
+	session Maze()
+	{
+		int maze;
+		string action;
+		tuple Point position;
+		tuple Point targetPosition;
+		
+		/* Initialize "constants" */
+		mazeSize = tuple { width = 4, height = 4 };
+		startPosition = tuple { x = 0, y = 0 };
+		goalPosition = tuple { x = mazeSize.width - 1, y = mazeSize.height - 1 };
+		
+		/* Receive the maze seed */
+		show getSeedHtml receive [ maze = seed ];
+		position = startPosition;
+		
+		while (true)
+		{
+			/* display the current maze state and get the action */
+			show plug showMazeHtml
+			[
+				m00 = GetMazeCell(maze, position, 0, 0),
+				m10 = GetMazeCell(maze, position, 1, 0),
+				m20 = GetMazeCell(maze, position, 2, 0),
+				m30 = GetMazeCell(maze, position, 3, 0),
+				m01 = GetMazeCell(maze, position, 0, 1),
+				m11 = GetMazeCell(maze, position, 1, 1),
+				m21 = GetMazeCell(maze, position, 2, 1),
+				m31 = GetMazeCell(maze, position, 3, 1),
+				m02 = GetMazeCell(maze, position, 0, 2),
+				m12 = GetMazeCell(maze, position, 1, 2),
+				m22 = GetMazeCell(maze, position, 2, 2),
+				m32 = GetMazeCell(maze, position, 3, 2),
+				m03 = GetMazeCell(maze, position, 0, 3),
+				m13 = GetMazeCell(maze, position, 1, 3),
+				m23 = GetMazeCell(maze, position, 2, 3),
+				m33 = GetMazeCell(maze, position, 3, 3)
+			]
+			receive [ action = action ];
+			
+			/* determine where to move to based on the action */
+			targetPosition = position;
+			if (action == "left")
+				targetPosition = tuple { x = position.x - 1, y = position.y };
+			else if (action == "right")
+				targetPosition = tuple { x = position.x + 1, y = position.y };
+			else if (action == "up")
+				targetPosition = tuple { x = position.x, y = position.y - 1 };
+			else if (action == "down")
+				targetPosition = tuple { x = position.x, y = position.y + 1 };
+			else if (action == "exit")
+				exit exitHtml;
+			
+			if (IsWalkable(maze, targetPosition))
+			{
+				/* move to the new position */
+				position = targetPosition;
+				if (PointEqual(position, goalPosition))
+					exit victoryHtml;
+			}
+		}
+
+		/* unreacheable, but makes the compiler happy */
+		exit exitHtml;
+	}
+}
