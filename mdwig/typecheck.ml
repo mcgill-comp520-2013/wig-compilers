@@ -142,6 +142,14 @@ and fbtb exp1 exp2 st =
             raise(InvalidType("Excepted : " ^  (typet_to_string (SimpleType(Bool))) ^ "\n Received : " ^ (typet_to_string type2) ) )
 	    else
             SimpleType(Bool)
+
+and resolve_schema ret st = match ret with
+  | TupleType(Static(n)) -> 
+					    ( match find_symbol n st with
+						| ST_Schema(fl) -> TupleType(Dynamic(fl))
+						| _ -> raise(NotASchema)
+					    )
+					| _ -> ret
           
 and type_exp exp st = match exp with
   | Lval (lvalue) -> type_lvalue lvalue st
@@ -233,14 +241,16 @@ and type_exp exp st = match exp with
 				    raise(InvalidFunctionArgumentNumber)
 				else
 				    List.iter2 
-					(fun x y -> if type_exp x st <> y then 
+					(fun x y -> if resolve_schema (type_exp x st) st <> resolve_schema y st then 
                                             print_string "error applying type " ;
-                                            (print_string (typet_to_string (type_exp x st))) ;
-                                            print_string "and type " ;
-                                            (print_string (typet_to_string y)) ;
+                                            (print_string (typet_to_string (resolve_schema (type_exp x st) st))) ;
+                                            print_string " in expression " ;
+                                            (print_string (exp_to_string exp)) ;
+                                            print_string " and type " ;
+                                            (print_string (typet_to_string (resolve_schema y st))) ;
                                             raise(InvalidFunctionArgumentType))
 					expl
-					argl
+          argl
 					;
 				    ( match ret with 
 					| TupleType(Static(n)) -> 
